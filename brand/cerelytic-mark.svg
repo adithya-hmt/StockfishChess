@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Cerelytic Chess mark</title>
+  <desc id="desc">A geometric white knight inside a Cerelytic green ring.</desc>
+  <rect width="512" height="512" rx="112" fill="#121412"/>
+  <circle cx="256" cy="256" r="190" fill="#1f231f" stroke="#70b84a" stroke-width="24"/>
+  <circle cx="256" cy="256" r="142" fill="#2a2f2a" stroke="#394139" stroke-width="12"/>
+  <path fill="#f4f7f2" d="M174 354h184v36H151l23-36Zm34-18c-8-36-5-72 10-102 13-27 36-51 66-68l-18-35 49 15c40 17 67 51 77 98 6 30 2 61-11 92h-51c12-30 14-57 6-80-9-27-30-46-63-57-4 20-12 38-24 54-14 18-32 32-55 43l-11-27 28-19c13-9 22-20 27-33-28 14-48 36-58 65-7 19-8 37-4 54h32Z"/>
+  <circle cx="292" cy="187" r="9" fill="#121412"/>
+  <path d="M210 329h125" stroke="#70b84a" stroke-width="12" stroke-linecap="round"/>
+</svg>

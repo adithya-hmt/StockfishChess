@@ -1,6 +1,22 @@
-StockfishChess-offline-arm64.apk
+# Build output
+*.apk
+*.apk.sha256
+/dist/
+/native/build/
+/native/apk-final/
+/native/__pycache__/
+__pycache__/
+*.pyc
+
+# Locally downloaded engine bundle and signing files
 stockfish-android-arm64-universal.zip
 stockfish-android-armv8.tar
-native/build/
-native/apk-final/
 *.keystore
+
+# Editors / operating systems
+.idea/
+.vscode/
+.DS_Store
+
+# Static analyzer reports
+*.plist
