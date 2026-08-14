@@ -1,0 +1,97 @@
+name: Bootstrap Cerelytic Chess v3
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/v3-bootstrap.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-24.04
+    env:
+      SOURCE_SHA256: 8a850427c713ca4852be4acf38f5f7bbae0ab9d6118122b04d3e2be954af35a0
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct verified v3 source from Git blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          blobs=(
+            e9911307af31061f7f8ebc9d782093abbd46e349
+            4871c9fae4dda3ceb9ee8ae27ce42cb9ad158258
+            8c1b2aa9786581672075bf41c82170d1fe918a1d
+            bc818c947fa65a6e186d04fde9ef7e819f2f725e
+            495911bf9eac5ccda8085548b11175181c65cd18
+            9ad1b4194fe7fdb7d31b70be74ad9e7442ec0274
+            1e64af6fe584d9ca00c114d0fbb53e8fd11d60aa
+            9b0baf27a80f565c5f3b4176ea286d9ed6ca1cb1
+            dcad0fc53ff97646287c54821049e27cf508eed4
+            ffb0167f4ec851b75e81be299618f747f4945e9a
+            48a400f76e183b05b2b464764a1779fb5dc05da4
+            f5145271bcc55376fcf84d05fa2ddeb545e2c8fd
+            d99802d4f8b302a6d1b859fee579a35717e1d0ee
+            fac55ed2aed9eef815bdc4041a61238f622a3a34
+            4fabc324a2007f9b66119481b5c42575e404056b
+            085cf6885637405af3e5673c24c1fa84953862e0
+            56a7d681a087a97ac8a596c951e6269299cce06e
+            f75d3344be09bc810489b599b87b8272d1e6a8fd
+            6f9c69ceb638e80dc62c977b4b0556e91a1ec4d2
+            006e6cff22d4c7d109e4c0c81c26628c7e6d929c
+            2370744d4c3f8ad423e27bfb9a053555744a1b2d
+          )
+
+          : > /tmp/cerelytic-v3.b64
+          for sha in "${blobs[@]}"; do
+            gh api "repos/${GITHUB_REPOSITORY}/git/blobs/${sha}" --jq .content \
+              | tr -d '\n\r' \
+              | base64 -d >> /tmp/cerelytic-v3.b64
+          done
+          tr -d '\n\r' < /tmp/cerelytic-v3.b64 | base64 -d > /tmp/cerelytic-v3.tar.gz
+          echo "${SOURCE_SHA256}  /tmp/cerelytic-v3.tar.gz" | sha256sum -c -
+
+          rm -rf /tmp/cerelytic-v3-unpack
+          mkdir -p /tmp/cerelytic-v3-unpack
+          tar -xzf /tmp/cerelytic-v3.tar.gz -C /tmp/cerelytic-v3-unpack
+
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -a /tmp/cerelytic-v3-unpack/. .
+
+      - name: Verify unpacked v3 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(cat VERSION)" = "3.0.0"
+          grep -q 'com.cerelytic.knight' native/patch_manifest.py
+          clang -std=c11 -Wall -Wextra -Werror native/tests/core_test.c native/core.c -o /tmp/core-test
+          /tmp/core-test
+          clang -std=c11 -Wall -Wextra -Werror native/tests/state_test.c native/state.c -o /tmp/state-test
+          /tmp/state-test
+          clang -std=c11 -Wall -Wextra -Werror -pthread native/tests/engine_parser_test.c native/engine.c native/core.c -o /tmp/engine-test
+          /tmp/engine-test
+          clang -std=c11 -Wall -Wextra -Werror native/tests/app_model_test.c native/app_model.c -o /tmp/model-test
+          /tmp/model-test
+          python3 native/tests/test_patch_manifest.py
+          python3 native/tests/test_patch_resources.py
+          chmod +x native/tests/render_preview_smoke.sh
+          native/tests/render_preview_smoke.sh /tmp/cerelytic-previews
+          bash -n native/build_native.sh native/build_apk.sh scripts/setup-fedora.sh scripts/push-github.sh scripts/verify-apk.sh native/tests/test_stockfish_artifact.sh native/tests/test_stockfish_integration.sh
+          python3 -m py_compile native/patch_manifest.py native/patch_resources.py
+
+      - name: Commit v3 source to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat: ship Cerelytic Chess v3'
+          git push origin HEAD:main
