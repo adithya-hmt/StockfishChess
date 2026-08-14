@@ -1,0 +1,6 @@
+StockfishChess-offline-arm64.apk
+stockfish-android-arm64-universal.zip
+stockfish-android-armv8.tar
+native/build/
+native/apk-final/
+*.keystore

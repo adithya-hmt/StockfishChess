@@ -10,7 +10,7 @@ A small `android.app.NativeActivity` chess app that runs Stockfish entirely on t
 - Tap-to-move legal chess with castling, en passant, promotion-to-queen, and New Game.
 - Stockfish runs as a local UCI process packaged inside the APK.
 
-The exact engine used by the provided APK is **Stockfish dev-20260810-5062aee5**, commit `5062aee519a1ba262d472d8ab139851ced56573e`.
+The GitHub release build uses **Stockfish 18** (`sf_18`) from the official Stockfish release.
 
 ## Build
 
