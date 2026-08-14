@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - source/StockfishChess-app-source.zip
+      - source/parts/**
       - .github/workflows/bootstrap.yml
 
 permissions:
@@ -14,6 +15,7 @@ jobs:
   bootstrap:
     runs-on: ubuntu-latest
     env:
+      SOURCE_SHA256: db1dc092406f442724a6ca9efe959ceb7edc3880b16b55bddfb89975623586d1
       STOCKFISH_TAG: sf_18
       STOCKFISH_TAR: stockfish-android-armv8.tar
       STOCKFISH_SHA256: e2eca54b0e3189ec7de338133c2b34fa8f5cdec3d2473519b414a5cb6815e768
@@ -23,14 +25,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Expand source archive
+      - name: Reconstruct and expand source archive
         shell: bash
         run: |
           set -euo pipefail
           rm -rf .bootstrap
-          mkdir -p .bootstrap
-          unzip -q source/StockfishChess-app-source.zip -d .bootstrap
-          cp -a .bootstrap/StockfishChess-source/. .
+          mkdir -p .bootstrap/unpacked
+          cat source/parts/part-*.b64 | tr -d '\n\r' | base64 -d > .bootstrap/source.zip
+          echo "${SOURCE_SHA256}  .bootstrap/source.zip" | sha256sum -c -
+          unzip -q .bootstrap/source.zip -d .bootstrap/unpacked
+          cp -a .bootstrap/unpacked/StockfishChess-source/. .
           rm -rf .bootstrap source
 
           python3 - <<'PY'
@@ -59,10 +63,6 @@ jobs:
           native/apk-final/
           *.keystore
           EOF
-
-          # This workflow is intentionally one-shot. The repository should end up
-          # containing the actual source, not a permanent self-unpacking archive.
-          rm -f .github/workflows/bootstrap.yml
 
       - name: Commit browsable source
         shell: bash
@@ -149,3 +149,13 @@ jobs:
               --title 'Stockfish Chess v1.0.0' \
               --notes-file release-notes.md
           fi
+
+      - name: Remove one-shot bootstrap workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/bootstrap.yml
+          git commit -m 'chore: remove bootstrap workflow [skip ci]'
+          git push origin HEAD:main
