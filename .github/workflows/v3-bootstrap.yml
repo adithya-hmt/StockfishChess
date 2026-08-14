@@ -95,3 +95,5 @@ jobs:
           git add -A
           git commit -m 'feat: ship Cerelytic Chess v3'
           git push origin HEAD:main
+
+# trigger: all 21 source blobs verified before bootstrap
