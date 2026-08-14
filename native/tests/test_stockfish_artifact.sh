@@ -49,3 +49,4 @@ echo "Stockfish Android artifact verification: PASS"
 echo "Engine SHA-256: $engine_sha"
 echo "License SHA-256: $license_sha"
 [[ -n "$embedded_ref" ]] && echo "Embedded engine reference: $embedded_ref"
+exit 0
