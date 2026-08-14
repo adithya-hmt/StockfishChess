@@ -90,10 +90,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # GitHub's Actions token can update repository contents but cannot
+          # change workflow files. Preserve them here; the authenticated
+          # connector updates the permanent v3 workflow after this push.
+          mkdir -p .github/workflows
+          git show HEAD:.github/workflows/build.yml > .github/workflows/build.yml
+          git show HEAD:.github/workflows/v3-bootstrap.yml > .github/workflows/v3-bootstrap.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
           git commit -m 'feat: ship Cerelytic Chess v3'
           git push origin HEAD:main
 
-# trigger: all 21 source blobs verified before bootstrap
+# trigger: preserve workflow files, push verified v3 source first
