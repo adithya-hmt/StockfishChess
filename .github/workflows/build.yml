@@ -1,12 +1,23 @@
-name: Build Android APK
+name: Build Cerelytic Chess v3 APK
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
-  workflow_dispatch:
+    paths:
+      - "native/**"
+      - "brand/**"
+      - "scripts/**"
+      - ".github/workflows/build.yml"
+      - "README.md"
+      - "LICENSE"
 
 permissions:
   contents: write
+
+concurrency:
+  group: cerelytic-chess-v3-apk
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -15,23 +26,49 @@ jobs:
       STOCKFISH_TAG: sf_18
       STOCKFISH_TAR: stockfish-android-armv8.tar
       STOCKFISH_SHA256: e2eca54b0e3189ec7de338133c2b34fa8f5cdec3d2473519b414a5cb6815e768
+      APK_NAME: CerelyticChess-v3-offline-arm64.apk
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+      - name: Check out source
+        uses: actions/checkout@v6
 
-      - name: Run source tests
+      - name: Run native and renderer tests
         shell: bash
         run: |
           set -euo pipefail
-          clang -std=c11 -Wall -Wextra -Werror native/tests/core_test.c native/core.c -o /tmp/sf-core-test
-          /tmp/sf-core-test
+          mkdir -p /tmp/cerelytic-tests
+          clang -std=c11 -Wall -Wextra -Werror \
+            native/tests/core_test.c native/core.c \
+            -o /tmp/cerelytic-tests/core-test
+          /tmp/cerelytic-tests/core-test
+
+          clang -std=c11 -Wall -Wextra -Werror \
+            native/tests/state_test.c native/state.c \
+            -o /tmp/cerelytic-tests/state-test
+          /tmp/cerelytic-tests/state-test
+
+          clang -std=c11 -Wall -Wextra -Werror -pthread \
+            native/tests/engine_parser_test.c native/engine.c native/core.c \
+            -o /tmp/cerelytic-tests/engine-test
+          /tmp/cerelytic-tests/engine-test
+
+          clang -std=c11 -Wall -Wextra -Werror \
+            native/tests/app_model_test.c native/app_model.c \
+            -o /tmp/cerelytic-tests/model-test
+          /tmp/cerelytic-tests/model-test
+
           python3 native/tests/test_patch_manifest.py
           python3 native/tests/test_patch_resources.py
-          bash -n native/build_native.sh native/build_apk.sh
+          chmod +x native/tests/test_stockfish_artifact.sh native/tests/render_preview_smoke.sh
+          native/tests/render_preview_smoke.sh /tmp/cerelytic-tests/previews
+          bash -n native/build_native.sh native/build_apk.sh scripts/setup-fedora.sh scripts/push-github.sh scripts/verify-apk.sh native/tests/test_stockfish_artifact.sh native/tests/test_stockfish_integration.sh
           python3 -m py_compile native/patch_manifest.py native/patch_resources.py
 
-      - name: Download and verify Stockfish 18
+      - name: Fetch verified Stockfish 18 ARM64 engine
         shell: bash
         run: |
           set -euo pipefail
@@ -40,78 +77,169 @@ jobs:
             -o "${STOCKFISH_TAR}"
           echo "${STOCKFISH_SHA256}  ${STOCKFISH_TAR}" | sha256sum -c -
 
-          rm -rf /tmp/stockfish18 /tmp/stockfish-normalized
-          mkdir -p /tmp/stockfish18 /tmp/stockfish-normalized
-          tar -xf "${STOCKFISH_TAR}" -C /tmp/stockfish18
-
-          engine="$(find /tmp/stockfish18 -type f -name 'stockfish-android-armv8' -print -quit)"
-          license="$(find /tmp/stockfish18 -type f \( -name 'Copying.txt' -o -name 'COPYING' \) -print -quit)"
+          rm -rf /tmp/sf18 /tmp/sf-normalized
+          mkdir -p /tmp/sf18 /tmp/sf-normalized
+          tar -xf "${STOCKFISH_TAR}" -C /tmp/sf18
+          engine="$(find /tmp/sf18 -type f -name stockfish-android-armv8 -print -quit)"
+          license="$(find /tmp/sf18 -type f \( -name Copying.txt -o -name COPYING \) -print -quit)"
           test -n "$engine"
           test -n "$license"
+          cp "$engine" /tmp/sf-normalized/stockfish-android-arm64-universal
+          cp "$license" /tmp/sf-normalized/Copying.txt
+          chmod 755 /tmp/sf-normalized/stockfish-android-arm64-universal
+          (cd /tmp/sf-normalized && zip -q "$GITHUB_WORKSPACE/stockfish-android-arm64-universal.zip" stockfish-android-arm64-universal Copying.txt)
+          chmod +x native/tests/test_stockfish_artifact.sh
+          STOCKFISH_ARTIFACT="$GITHUB_WORKSPACE/stockfish-android-arm64-universal.zip" native/tests/test_stockfish_artifact.sh
 
-          cp "$engine" /tmp/stockfish-normalized/stockfish-android-arm64-universal
-          cp "$license" /tmp/stockfish-normalized/Copying.txt
-          chmod 755 /tmp/stockfish-normalized/stockfish-android-arm64-universal
-          (cd /tmp/stockfish-normalized && zip -q "$GITHUB_WORKSPACE/stockfish-android-arm64-universal.zip" stockfish-android-arm64-universal Copying.txt)
-
-      - name: Build signed APK
+      - name: Locate Android signing tools
+        id: android-tools
         shell: bash
         run: |
           set -euo pipefail
+          sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          apksigner_bin=""
+          if [[ -n "$sdk_root" && -d "$sdk_root/build-tools" ]]; then
+            apksigner_bin="$(find "$sdk_root/build-tools" -type f -name apksigner -print 2>/dev/null | sort -V | tail -n 1)"
+          fi
+          if [[ -z "$apksigner_bin" ]]; then
+            yes | sdkmanager --licenses >/dev/null || true
+            sdkmanager "build-tools;36.0.0"
+            sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+            apksigner_bin="$(find "$sdk_root/build-tools" -type f -name apksigner -print | sort -V | tail -n 1)"
+          fi
+          test -x "$apksigner_bin"
+          echo "apksigner=$apksigner_bin" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare stable release signing
+        id: signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${ANDROID_KEYSTORE_BASE64:-}" \
+             && -n "${ANDROID_KEYSTORE_PASSWORD:-}" \
+             && -n "${ANDROID_KEY_ALIAS:-}" \
+             && -n "${ANDROID_KEY_PASSWORD:-}" ]]; then
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/cerelytic-release.keystore"
+            keytool -list \
+              -keystore "$RUNNER_TEMP/cerelytic-release.keystore" \
+              -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+              -alias "$ANDROID_KEY_ALIAS" >/dev/null
+            echo "stable=true" >> "$GITHUB_OUTPUT"
+            echo "keystore=$RUNNER_TEMP/cerelytic-release.keystore" >> "$GITHUB_OUTPUT"
+          else
+            echo "stable=false" >> "$GITHUB_OUTPUT"
+            echo "keystore=$RUNNER_TEMP/cerelytic-development.keystore" >> "$GITHUB_OUTPUT"
+            echo "Stable signing secrets are absent. The APK will be uploaded as a workflow artifact but no release will be replaced." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Build and verify signed APK
+        shell: bash
+        env:
+          APKSIGNER_BIN: ${{ steps.android-tools.outputs.apksigner }}
+          STABLE_SIGNING: ${{ steps.signing.outputs.stable }}
+          KEYSTORE_FILE: ${{ steps.signing.outputs.keystore }}
+        run: |
+          set -euo pipefail
           chmod +x native/build_native.sh native/build_apk.sh
-          STOCKFISH_ARTIFACT="$GITHUB_WORKSPACE/stockfish-android-arm64-universal.zip" ./native/build_apk.sh
+          if [[ "$STABLE_SIGNING" == "true" ]]; then
+            signing_env=(
+              KEYSTORE="$KEYSTORE_FILE"
+              STOREPASS="$ANDROID_KEYSTORE_PASSWORD"
+              KEYPASS="$ANDROID_KEY_PASSWORD"
+              KEY_ALIAS="$ANDROID_KEY_ALIAS"
+              REQUIRE_EXISTING_KEYSTORE=1
+            )
+          else
+            signing_env=(
+              KEYSTORE="$KEYSTORE_FILE"
+              STOREPASS=cerelytic-actions-development
+              KEYPASS=cerelytic-actions-development
+              KEY_ALIAS=cerelyticdevelopment
+            )
+          fi
 
-          # This is a deliberately self-signed sideload APK, so `-strict` would
-          # reject the expected self-signed certificate chain even when the
-          # signature itself is valid.
-          jarsigner -verify StockfishChess-offline-arm64.apk
-          unzip -l StockfishChess-offline-arm64.apk | grep -q 'META-INF/.*\.SF'
-          sha256sum StockfishChess-offline-arm64.apk | tee apk-sha256.txt
+          env "${signing_env[@]}" \
+            STOCKFISH_ARTIFACT="$GITHUB_WORKSPACE/stockfish-android-arm64-universal.zip" \
+            ENGINE_LABEL="Stockfish 18" \
+            ENGINE_REF="sf_18 / cb3d4ee9b47d0c5aae855b12379378ea1439675c" \
+            APK_OUT="$GITHUB_WORKSPACE/$APK_NAME" \
+            APKSIGNER="$APKSIGNER_BIN" \
+            ./native/build_apk.sh
 
-      - name: Upload APK as workflow artifact
-        uses: actions/upload-artifact@v4
+          "$APKSIGNER_BIN" verify --verbose --print-certs "$APK_NAME"
+          python3 - "$APK_NAME" <<'PY'
+          import sys, zipfile
+          with zipfile.ZipFile(sys.argv[1]) as archive:
+              assert archive.testzip() is None
+              required = {
+                  "AndroidManifest.xml", "resources.arsc",
+                  "lib/arm64-v8a/libsf_chess.so", "lib/arm64-v8a/libstockfish.so",
+                  "assets/NOTICE.txt", "assets/BUILD-METADATA.txt",
+              }
+              names = set(archive.namelist())
+              assert required <= names, required - names
+          print("APK archive verification: PASS")
+          PY
+          sha256sum "$APK_NAME" | tee "$APK_NAME.sha256"
+
+      - name: Upload APK workflow artifact
+        uses: actions/upload-artifact@v7
         with:
-          name: StockfishChess-offline-arm64
+          name: CerelyticChess-v3-offline-arm64
           path: |
-            StockfishChess-offline-arm64.apk
-            apk-sha256.txt
+            ${{ env.APK_NAME }}
+            ${{ env.APK_NAME }}.sha256
           if-no-files-found: error
-          retention-days: 90
           compression-level: 0
 
-      - name: Publish GitHub release
+      - name: Explain unsigned release mode
+        if: steps.signing.outputs.stable != 'true'
+        shell: bash
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'
+          ## Release not updated
+
+          Configure these repository secrets to publish an upgrade-compatible `v3.0.0` release:
+
+          - `ANDROID_KEYSTORE_BASE64`
+          - `ANDROID_KEYSTORE_PASSWORD`
+          - `ANDROID_KEY_ALIAS`
+          - `ANDROID_KEY_PASSWORD`
+
+          The build artifact above remains downloadable for testing. It uses a temporary development key and therefore is not suitable for future in-place upgrades.
+          SUMMARY
+
+      - name: Publish v3.0.0 release
+        if: steps.signing.outputs.stable == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          apk_sha="$(cut -d' ' -f1 apk-sha256.txt)"
-          cat > release-notes.md <<EOF
-          Offline ARM64 Android chess app powered by Stockfish 18.
+          apk_sha="$(cut -d' ' -f1 "$APK_NAME.sha256")"
+          cat > release-notes.md <<EOF_NOTES
+          Cerelytic Chess v3 turns the original board into a complete local-first Android chess product.
 
-          - Android 10+ (API 29)
-          - ARM64 only
-          - No Android permissions
-          - Human White vs Stockfish Black
-          - Easy / Medium / Hard
-          - Castling, en passant and queen promotion
+          - Multipage Home, Play, Puzzles, History, Analysis, Profile, and Settings experience
+          - Device-local profiles and optional four-digit local PIN lock
+          - Stockfish 18, pass-and-play, offline puzzles, hints, replay, and persistent game resume
+          - Smooth tap/drag movement, legal-move markers, haptics, clocks, promotion, and board flip
+          - Amber check feedback and a dedicated red checkmate result sequence
+          - Original Cerelytic brand mark, avatars, icons, and Staunton piece system
+          - Android 10+, ARM64, fully offline, and no Android permissions
 
           APK SHA-256: \`${apk_sha}\`
 
-          The official Stockfish 18 Android release tar is attached alongside the APK as the corresponding GPLv3 engine source and license material.
-          EOF
+          The exact official Stockfish 18 Android source archive used for the embedded engine is attached for GPLv3 compliance.
+          EOF_NOTES
 
-          if gh release view v1.0.0 >/dev/null 2>&1; then
-            gh release upload v1.0.0 StockfishChess-offline-arm64.apk "${STOCKFISH_TAR}" apk-sha256.txt --clobber
-            gh release edit v1.0.0 \
-              --title 'Stockfish Chess v1.0.0' \
-              --notes-file release-notes.md
+          if gh release view v3.0.0 >/dev/null 2>&1; then
+            gh release upload v3.0.0 "$APK_NAME" "$APK_NAME.sha256" "${STOCKFISH_TAR}" --clobber
+            gh release edit v3.0.0 --title "Cerelytic Chess v3.0.0" --notes-file release-notes.md
           else
-            gh release create v1.0.0 \
-              StockfishChess-offline-arm64.apk \
-              "${STOCKFISH_TAR}" \
-              apk-sha256.txt \
+            gh release create v3.0.0 \
+              "$APK_NAME" "$APK_NAME.sha256" "${STOCKFISH_TAR}" \
               --target main \
-              --title 'Stockfish Chess v1.0.0' \
+              --title "Cerelytic Chess v3.0.0" \
               --notes-file release-notes.md
           fi
