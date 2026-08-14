@@ -1,0 +1,117 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      STOCKFISH_TAG: sf_18
+      STOCKFISH_TAR: stockfish-android-armv8.tar
+      STOCKFISH_SHA256: e2eca54b0e3189ec7de338133c2b34fa8f5cdec3d2473519b414a5cb6815e768
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run source tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          clang -std=c11 -Wall -Wextra -Werror native/tests/core_test.c native/core.c -o /tmp/sf-core-test
+          /tmp/sf-core-test
+          python3 native/tests/test_patch_manifest.py
+          python3 native/tests/test_patch_resources.py
+          bash -n native/build_native.sh native/build_apk.sh
+          python3 -m py_compile native/patch_manifest.py native/patch_resources.py
+
+      - name: Download and verify Stockfish 18
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 \
+            "https://github.com/official-stockfish/Stockfish/releases/download/${STOCKFISH_TAG}/${STOCKFISH_TAR}" \
+            -o "${STOCKFISH_TAR}"
+          echo "${STOCKFISH_SHA256}  ${STOCKFISH_TAR}" | sha256sum -c -
+
+          rm -rf /tmp/stockfish18 /tmp/stockfish-normalized
+          mkdir -p /tmp/stockfish18 /tmp/stockfish-normalized
+          tar -xf "${STOCKFISH_TAR}" -C /tmp/stockfish18
+
+          engine="$(find /tmp/stockfish18 -type f -name 'stockfish-android-armv8' -print -quit)"
+          license="$(find /tmp/stockfish18 -type f \( -name 'Copying.txt' -o -name 'COPYING' \) -print -quit)"
+          test -n "$engine"
+          test -n "$license"
+
+          cp "$engine" /tmp/stockfish-normalized/stockfish-android-arm64-universal
+          cp "$license" /tmp/stockfish-normalized/Copying.txt
+          chmod 755 /tmp/stockfish-normalized/stockfish-android-arm64-universal
+          (cd /tmp/stockfish-normalized && zip -q "$GITHUB_WORKSPACE/stockfish-android-arm64-universal.zip" stockfish-android-arm64-universal Copying.txt)
+
+      - name: Build signed APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x native/build_native.sh native/build_apk.sh
+          STOCKFISH_ARTIFACT="$GITHUB_WORKSPACE/stockfish-android-arm64-universal.zip" ./native/build_apk.sh
+
+          # This is a deliberately self-signed sideload APK, so `-strict` would
+          # reject the expected self-signed certificate chain even when the
+          # signature itself is valid.
+          jarsigner -verify StockfishChess-offline-arm64.apk
+          unzip -l StockfishChess-offline-arm64.apk | grep -q 'META-INF/.*\.SF'
+          sha256sum StockfishChess-offline-arm64.apk | tee apk-sha256.txt
+
+      - name: Upload APK as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: StockfishChess-offline-arm64
+          path: |
+            StockfishChess-offline-arm64.apk
+            apk-sha256.txt
+          if-no-files-found: error
+          retention-days: 90
+          compression-level: 0
+
+      - name: Publish GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          apk_sha="$(cut -d' ' -f1 apk-sha256.txt)"
+          cat > release-notes.md <<EOF
+          Offline ARM64 Android chess app powered by Stockfish 18.
+
+          - Android 10+ (API 29)
+          - ARM64 only
+          - No Android permissions
+          - Human White vs Stockfish Black
+          - Easy / Medium / Hard
+          - Castling, en passant and queen promotion
+
+          APK SHA-256: \`${apk_sha}\`
+
+          The official Stockfish 18 Android release tar is attached alongside the APK as the corresponding GPLv3 engine source and license material.
+          EOF
+
+          if gh release view v1.0.0 >/dev/null 2>&1; then
+            gh release upload v1.0.0 StockfishChess-offline-arm64.apk "${STOCKFISH_TAR}" apk-sha256.txt --clobber
+            gh release edit v1.0.0 \
+              --title 'Stockfish Chess v1.0.0' \
+              --notes-file release-notes.md
+          else
+            gh release create v1.0.0 \
+              StockfishChess-offline-arm64.apk \
+              "${STOCKFISH_TAR}" \
+              apk-sha256.txt \
+              --target main \
+              --title 'Stockfish Chess v1.0.0' \
+              --notes-file release-notes.md
+          fi
