@@ -1,0 +1,151 @@
+name: Bootstrap source and publish release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - source/StockfishChess-app-source.zip
+      - .github/workflows/bootstrap.yml
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    env:
+      STOCKFISH_TAG: sf_18
+      STOCKFISH_TAR: stockfish-android-armv8.tar
+      STOCKFISH_SHA256: e2eca54b0e3189ec7de338133c2b34fa8f5cdec3d2473519b414a5cb6815e768
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Expand source archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .bootstrap
+          mkdir -p .bootstrap
+          unzip -q source/StockfishChess-app-source.zip -d .bootstrap
+          cp -a .bootstrap/StockfishChess-source/. .
+          rm -rf .bootstrap source
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          readme = Path('README.md')
+          text = readme.read_text()
+          text = text.replace(
+              'The exact engine used by the provided APK is **Stockfish dev-20260810-5062aee5**, commit `5062aee519a1ba262d472d8ab139851ced56573e`.',
+              'The GitHub release build uses **Stockfish 18** (`sf_18`) from the official Stockfish release.'
+          )
+          readme.write_text(text)
+
+          build = Path('native/build_apk.sh')
+          text = build.read_text()
+          text = text.replace('Chess engine: Stockfish dev-20260810-5062aee5', 'Chess engine: Stockfish 18')
+          text = text.replace('Commit: 5062aee519a1ba262d472d8ab139851ced56573e', 'Tag: sf_18')
+          build.write_text(text)
+          PY
+
+          cat > .gitignore <<'EOF'
+          StockfishChess-offline-arm64.apk
+          stockfish-android-arm64-universal.zip
+          stockfish-android-armv8.tar
+          native/build/
+          native/apk-final/
+          *.keystore
+          EOF
+
+          # This workflow is intentionally one-shot. The repository should end up
+          # containing the actual source, not a permanent self-unpacking archive.
+          rm -f .github/workflows/bootstrap.yml
+
+      - name: Commit browsable source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'chore: unpack Android source [skip ci]'
+          git push origin HEAD:main
+
+      - name: Run source tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          clang -std=c11 -Wall -Wextra -Werror native/tests/core_test.c native/core.c -o /tmp/sf-core-test
+          /tmp/sf-core-test
+          python3 native/tests/test_patch_manifest.py
+          python3 native/tests/test_patch_resources.py
+          bash -n native/build_native.sh native/build_apk.sh
+          python3 -m py_compile native/patch_manifest.py native/patch_resources.py
+
+      - name: Download and verify Stockfish 18
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 --retry-delay 2 \
+            "https://github.com/official-stockfish/Stockfish/releases/download/${STOCKFISH_TAG}/${STOCKFISH_TAR}" \
+            -o "${STOCKFISH_TAR}"
+          echo "${STOCKFISH_SHA256}  ${STOCKFISH_TAR}" | sha256sum -c -
+
+          rm -rf /tmp/stockfish18 /tmp/stockfish-normalized
+          mkdir -p /tmp/stockfish18 /tmp/stockfish-normalized
+          tar -xf "${STOCKFISH_TAR}" -C /tmp/stockfish18
+
+          engine="$(find /tmp/stockfish18 -type f -name 'stockfish-android-armv8' -print -quit)"
+          license="$(find /tmp/stockfish18 -type f \( -name 'Copying.txt' -o -name 'COPYING' \) -print -quit)"
+          test -n "$engine"
+          test -n "$license"
+          cp "$engine" /tmp/stockfish-normalized/stockfish-android-arm64-universal
+          cp "$license" /tmp/stockfish-normalized/Copying.txt
+          chmod 755 /tmp/stockfish-normalized/stockfish-android-arm64-universal
+          (cd /tmp/stockfish-normalized && zip -q "$GITHUB_WORKSPACE/stockfish-android-arm64-universal.zip" stockfish-android-arm64-universal Copying.txt)
+
+      - name: Build APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x native/build_native.sh native/build_apk.sh
+          STOCKFISH_ARTIFACT="$GITHUB_WORKSPACE/stockfish-android-arm64-universal.zip" ./native/build_apk.sh
+          jarsigner -verify -strict StockfishChess-offline-arm64.apk
+          sha256sum StockfishChess-offline-arm64.apk | tee apk-sha256.txt
+
+      - name: Publish v1.0.0
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          apk_sha="$(cut -d' ' -f1 apk-sha256.txt)"
+          cat > release-notes.md <<EOF
+          Offline ARM64 Android chess app powered by Stockfish 18.
+
+          - Android 10+ (API 29)
+          - ARM64
+          - No Android permissions
+          - Human White vs Stockfish Black
+          - Easy / Medium / Hard
+          - Castling, en passant and queen promotion
+
+          APK SHA-256: \`${apk_sha}\`
+
+          The official Stockfish 18 Android release tar is attached alongside the APK to provide the corresponding GPLv3 engine source and license materials.
+          EOF
+
+          if gh release view v1.0.0 >/dev/null 2>&1; then
+            gh release upload v1.0.0 StockfishChess-offline-arm64.apk "${STOCKFISH_TAR}" --clobber
+            gh release edit v1.0.0 --title 'Stockfish Chess v1.0.0' --notes-file release-notes.md
+          else
+            gh release create v1.0.0 \
+              StockfishChess-offline-arm64.apk \
+              "${STOCKFISH_TAR}" \
+              --target main \
+              --title 'Stockfish Chess v1.0.0' \
+              --notes-file release-notes.md
+          fi
