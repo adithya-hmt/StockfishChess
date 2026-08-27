@@ -1,4 +1,4 @@
-name: Build Cerelytic Chess v3 APK
+name: Build Chess v3 APK
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: cerelytic-chess-v3-apk
+  group: chess-v3-apk
   cancel-in-progress: true
 
 jobs:
@@ -26,7 +26,7 @@ jobs:
       STOCKFISH_TAG: sf_18
       STOCKFISH_TAR: stockfish-android-armv8.tar
       STOCKFISH_SHA256: e2eca54b0e3189ec7de338133c2b34fa8f5cdec3d2473519b414a5cb6815e768
-      APK_NAME: CerelyticChess-v3-offline-arm64.apk
+      APK_NAME: Chess-v3-offline-arm64.apk
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -40,31 +40,31 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/cerelytic-tests
+          mkdir -p /tmp/chess-tests
           clang -std=c11 -Wall -Wextra -Werror \
             native/tests/core_test.c native/core.c \
-            -o /tmp/cerelytic-tests/core-test
-          /tmp/cerelytic-tests/core-test
+            -o /tmp/chess-tests/core-test
+          /tmp/chess-tests/core-test
 
           clang -std=c11 -Wall -Wextra -Werror \
             native/tests/state_test.c native/state.c \
-            -o /tmp/cerelytic-tests/state-test
-          /tmp/cerelytic-tests/state-test
+            -o /tmp/chess-tests/state-test
+          /tmp/chess-tests/state-test
 
           clang -std=c11 -Wall -Wextra -Werror -pthread \
             native/tests/engine_parser_test.c native/engine.c native/core.c \
-            -o /tmp/cerelytic-tests/engine-test
-          /tmp/cerelytic-tests/engine-test
+            -o /tmp/chess-tests/engine-test
+          /tmp/chess-tests/engine-test
 
           clang -std=c11 -Wall -Wextra -Werror \
             native/tests/app_model_test.c native/app_model.c \
-            -o /tmp/cerelytic-tests/model-test
-          /tmp/cerelytic-tests/model-test
+            -o /tmp/chess-tests/model-test
+          /tmp/chess-tests/model-test
 
           python3 native/tests/test_patch_manifest.py
           python3 native/tests/test_patch_resources.py
           chmod +x native/tests/test_stockfish_artifact.sh native/tests/render_preview_smoke.sh
-          native/tests/render_preview_smoke.sh /tmp/cerelytic-tests/previews
+          native/tests/render_preview_smoke.sh /tmp/chess-tests/previews
           bash -n native/build_native.sh native/build_apk.sh scripts/setup-fedora.sh scripts/push-github.sh scripts/verify-apk.sh native/tests/test_stockfish_artifact.sh native/tests/test_stockfish_integration.sh
           python3 -m py_compile native/patch_manifest.py native/patch_resources.py
 
@@ -119,16 +119,16 @@ jobs:
              && -n "${ANDROID_KEYSTORE_PASSWORD:-}" \
              && -n "${ANDROID_KEY_ALIAS:-}" \
              && -n "${ANDROID_KEY_PASSWORD:-}" ]]; then
-            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/cerelytic-release.keystore"
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/chess-release.keystore"
             keytool -list \
-              -keystore "$RUNNER_TEMP/cerelytic-release.keystore" \
+              -keystore "$RUNNER_TEMP/chess-release.keystore" \
               -storepass "$ANDROID_KEYSTORE_PASSWORD" \
               -alias "$ANDROID_KEY_ALIAS" >/dev/null
             echo "stable=true" >> "$GITHUB_OUTPUT"
-            echo "keystore=$RUNNER_TEMP/cerelytic-release.keystore" >> "$GITHUB_OUTPUT"
+            echo "keystore=$RUNNER_TEMP/chess-release.keystore" >> "$GITHUB_OUTPUT"
           else
             echo "stable=false" >> "$GITHUB_OUTPUT"
-            echo "keystore=$RUNNER_TEMP/cerelytic-development.keystore" >> "$GITHUB_OUTPUT"
+            echo "keystore=$RUNNER_TEMP/chess-development.keystore" >> "$GITHUB_OUTPUT"
             echo "Stable signing secrets are absent. The APK will be uploaded as a workflow artifact but no release will be replaced." >> "$GITHUB_STEP_SUMMARY"
           fi
 
@@ -152,9 +152,9 @@ jobs:
           else
             signing_env=(
               KEYSTORE="$KEYSTORE_FILE"
-              STOREPASS=cerelytic-actions-development
-              KEYPASS=cerelytic-actions-development
-              KEY_ALIAS=cerelyticdevelopment
+              STOREPASS=chess-actions-development
+              KEYPASS=chess-actions-development
+              KEY_ALIAS=chessdevelopment
             )
           fi
 
@@ -185,7 +185,7 @@ jobs:
       - name: Upload APK workflow artifact
         uses: actions/upload-artifact@v7
         with:
-          name: CerelyticChess-v3-offline-arm64
+          name: Chess-v3-offline-arm64
           path: |
             ${{ env.APK_NAME }}
             ${{ env.APK_NAME }}.sha256
@@ -218,14 +218,14 @@ jobs:
           set -euo pipefail
           apk_sha="$(cut -d' ' -f1 "$APK_NAME.sha256")"
           cat > release-notes.md <<EOF_NOTES
-          Cerelytic Chess v3 turns the original board into a complete local-first Android chess product.
+          Chess v3 is a complete local-first Android chess product.
 
           - Multipage Home, Play, Puzzles, History, Analysis, Profile, and Settings experience
           - Device-local profiles and optional four-digit local PIN lock
           - Stockfish 18, pass-and-play, offline puzzles, hints, replay, and persistent game resume
           - Smooth tap/drag movement, legal-move markers, haptics, clocks, promotion, and board flip
           - Amber check feedback and a dedicated red checkmate result sequence
-          - Original Cerelytic brand mark, avatars, icons, and Staunton piece system
+          - Neutral chess presentation with no Cerelytic visual branding
           - Android 10+, ARM64, fully offline, and no Android permissions
 
           APK SHA-256: \`${apk_sha}\`
@@ -235,11 +235,11 @@ jobs:
 
           if gh release view v3.0.0 >/dev/null 2>&1; then
             gh release upload v3.0.0 "$APK_NAME" "$APK_NAME.sha256" "${STOCKFISH_TAR}" --clobber
-            gh release edit v3.0.0 --title "Cerelytic Chess v3.0.0" --notes-file release-notes.md
+            gh release edit v3.0.0 --title "Chess v3.0.0" --notes-file release-notes.md
           else
             gh release create v3.0.0 \
               "$APK_NAME" "$APK_NAME.sha256" "${STOCKFISH_TAR}" \
               --target main \
-              --title "Cerelytic Chess v3.0.0" \
+              --title "Chess v3.0.0" \
               --notes-file release-notes.md
           fi
