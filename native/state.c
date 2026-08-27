@@ -54,7 +54,7 @@ int cer_state_load(const char *directory, CerPersisted *state) {
     size_t total = 0;
     if (!state) return 0;
     cer_state_defaults(state);
-    if (!cer_path(path, sizeof(path), directory, "cerelytic-v3.state")) return 0;
+    if (!cer_path(path, sizeof(path), directory, "framilton-v3.state")) return 0;
     fd = open(path, O_RDONLY);
     if (fd < 0) return 0;
     while (total < sizeof(*state)) {
@@ -80,8 +80,8 @@ int cer_state_save(const char *directory, const CerPersisted *state) {
     char path[1024], temp[1024];
     int fd;
     if (!directory || !state) return 0;
-    if (!cer_path(path, sizeof(path), directory, "cerelytic-v3.state") ||
-        !cer_path(temp, sizeof(temp), directory, "cerelytic-v3.state.tmp")) return 0;
+    if (!cer_path(path, sizeof(path), directory, "framilton-v3.state") ||
+        !cer_path(temp, sizeof(temp), directory, "framilton-v3.state.tmp")) return 0;
     fd = open(temp, O_WRONLY | O_CREAT | O_TRUNC, 0600);
     if (fd < 0) return 0;
     if (!cer_write_bytes(fd, state, sizeof(*state))) { close(fd); unlink(temp); return 0; }
@@ -91,7 +91,7 @@ int cer_state_save(const char *directory, const CerPersisted *state) {
 }
 
 uint32_t cer_pin_hash(const char *pin) {
-    static const char salt[] = "CERELYTIC-LOCAL-V3";
+    static const char salt[] = "FRAMILTON-LOCAL-V3";
     uint32_t h = 2166136261u;
     size_t i;
     for (i = 0; i < sizeof(salt) - 1; ++i) { h ^= (unsigned char)salt[i]; h *= 16777619u; }
