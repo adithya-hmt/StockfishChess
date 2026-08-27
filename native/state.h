@@ -1,5 +1,5 @@
-#ifndef CERELYTIC_STATE_H
-#define CERELYTIC_STATE_H
+#ifndef FRAMILTON_STATE_H
+#define FRAMILTON_STATE_H
 #include "platform.h"
 
 #define CER_STATE_MAGIC 0x43524333u
@@ -29,9 +29,9 @@ typedef struct {
     char moves[CER_HISTORY_MOVES];
     char start_fen[CER_FEN_CAP];
     int profile_index;
-    int result;          /* 1 win, 2 draw, 3 loss from the profile perspective */
-    int result_reason;   /* 1 mate, 2 stalemate, 3 resign, 4 timeout, 5 material */
-    int mode;            /* 0 Stockfish, 1 pass & play, 2 puzzle */
+    int result;
+    int result_reason;
+    int mode;
     int level;
     int human_side;
     int move_count;
