@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Patch the NativeActivity template manifest for Cerelytic Chess."""
+"""Patch the NativeActivity template manifest for Framilton Chess."""
 from __future__ import annotations
 
 import argparse
@@ -136,10 +136,10 @@ def patch_manifest(source: pathlib.Path, output: pathlib.Path) -> None:
         if strings[index] != value:
             raise ValueError(f"unexpected template string {index}: {strings[index]!r}")
 
-    strings[19] = "com.cerelytic.knight"
+    strings[19] = "com.framilton.knight"
     strings[26] = "sf_chess"
     label_index = len(strings)
-    strings.append("Cerelytic Chess")
+    strings.append("Framilton Chess")
     new_pool = _build_string_pool(strings)
 
     old_rest = data[8 + old_pool_size :]

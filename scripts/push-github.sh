@@ -4,13 +4,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 REPO="${GITHUB_REPOSITORY:-adithya-hmt/StockfishChess}"
 REMOTE="https://github.com/${REPO}.git"
-MESSAGE="feat: ship Cerelytic Chess v3 local product"
+MESSAGE="feat: ship Framilton Chess v3 local product"
 WAIT=1
 CONFIGURE_SIGNING=1
-KEYSTORE_PATH="${KEYSTORE:-$HOME/.local/share/cerelytic-chess/release.keystore}"
-STORE_PASSWORD="${STOREPASS:-cerelytic-local-release}"
+KEYSTORE_PATH="${KEYSTORE:-$HOME/.local/share/framilton-chess/release.keystore}"
+STORE_PASSWORD="${STOREPASS:-framilton-local-release}"
 KEY_PASSWORD="${KEYPASS:-$STORE_PASSWORD}"
-KEY_ALIAS_VALUE="${KEY_ALIAS:-cerelyticlocal}"
+KEY_ALIAS_VALUE="${KEY_ALIAS:-framiltonlocal}"
 
 while (($#)); do
   case "$1" in
@@ -61,8 +61,8 @@ gh repo view "$REPO" >/dev/null 2>&1 || {
 }
 
 if (( CONFIGURE_SIGNING )); then
-  if [[ ! -f "$KEYSTORE_PATH" && -f "$ROOT/signing/cerelytic-v3-release.keystore" ]]; then
-    KEYSTORE_PATH="$ROOT/signing/cerelytic-v3-release.keystore"
+  if [[ ! -f "$KEYSTORE_PATH" && -f "$ROOT/signing/framilton-v3-release.keystore" ]]; then
+    KEYSTORE_PATH="$ROOT/signing/framilton-v3-release.keystore"
   fi
   [[ -f "$KEYSTORE_PATH" ]] || {
     echo "Stable signing key not found: $KEYSTORE_PATH" >&2
@@ -101,7 +101,7 @@ rsync -a --delete \
 cd "$work/repo"
 git add -A
 if git diff --cached --quiet; then
-  echo "GitHub already matches the Cerelytic Chess v3 source tree."
+  echo "GitHub already matches the Framilton Chess v3 source tree."
   gh workflow run build.yml --repo "$REPO" --ref main
 else
   git commit -m "$MESSAGE"
@@ -114,7 +114,7 @@ if (( ! WAIT )); then
   exit 0
 fi
 
-printf '\nWaiting for GitHub Actions to manufacture the APK, because apparently even a pawn needs CI now.\n'
+printf '\nWaiting for GitHub Actions to build the Framilton Chess APK.\n'
 sleep 4
 run_id="$(gh run list --repo "$REPO" --workflow build.yml --branch main --limit 1 --json databaseId --jq '.[0].databaseId')"
 [[ -n "$run_id" && "$run_id" != "null" ]] || { echo "Could not locate the build workflow run." >&2; exit 4; }
@@ -126,7 +126,7 @@ if gh release view v3.0.0 --repo "$REPO" >/dev/null 2>&1; then
 else
   cat <<MSG
 The workflow completed, but v3.0.0 was not published. Configure the four stable
-signing secrets documented in README.md, then rerun the Build Cerelytic Chess v3
+signing secrets documented in README.md, then rerun the Build Framilton Chess v3
 APK workflow. An APK workflow artifact is still available from run $run_id.
 MSG
 fi

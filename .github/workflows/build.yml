@@ -1,4 +1,4 @@
-name: Build Cerelytic Chess v3 APK
+name: Build Framilton Chess v3 APK
 
 on:
   workflow_dispatch:
@@ -7,16 +7,29 @@ on:
     paths:
       - "native/**"
       - "brand/**"
+      - "docs/**"
       - "scripts/**"
       - ".github/workflows/build.yml"
       - "README.md"
+      - "CHANGELOG.md"
+      - "LICENSE"
+  pull_request:
+    branches: [main]
+    paths:
+      - "native/**"
+      - "brand/**"
+      - "docs/**"
+      - "scripts/**"
+      - ".github/workflows/build.yml"
+      - "README.md"
+      - "CHANGELOG.md"
       - "LICENSE"
 
 permissions:
   contents: write
 
 concurrency:
-  group: cerelytic-chess-v3-apk
+  group: framilton-chess-v3-apk-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -26,7 +39,7 @@ jobs:
       STOCKFISH_TAG: sf_18
       STOCKFISH_TAR: stockfish-android-armv8.tar
       STOCKFISH_SHA256: e2eca54b0e3189ec7de338133c2b34fa8f5cdec3d2473519b414a5cb6815e768
-      APK_NAME: CerelyticChess-v3-offline-arm64.apk
+      APK_NAME: FramiltonChess-v3-offline-arm64.apk
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -40,32 +53,35 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/cerelytic-tests
+          mkdir -p /tmp/framilton-chess-tests
+          chmod +x scripts/check-framilton-identity.sh
+          ./scripts/check-framilton-identity.sh
+
           clang -std=c11 -Wall -Wextra -Werror \
             native/tests/core_test.c native/core.c \
-            -o /tmp/cerelytic-tests/core-test
-          /tmp/cerelytic-tests/core-test
+            -o /tmp/framilton-chess-tests/core-test
+          /tmp/framilton-chess-tests/core-test
 
           clang -std=c11 -Wall -Wextra -Werror \
             native/tests/state_test.c native/state.c \
-            -o /tmp/cerelytic-tests/state-test
-          /tmp/cerelytic-tests/state-test
+            -o /tmp/framilton-chess-tests/state-test
+          /tmp/framilton-chess-tests/state-test
 
           clang -std=c11 -Wall -Wextra -Werror -pthread \
             native/tests/engine_parser_test.c native/engine.c native/core.c \
-            -o /tmp/cerelytic-tests/engine-test
-          /tmp/cerelytic-tests/engine-test
+            -o /tmp/framilton-chess-tests/engine-test
+          /tmp/framilton-chess-tests/engine-test
 
           clang -std=c11 -Wall -Wextra -Werror \
             native/tests/app_model_test.c native/app_model.c \
-            -o /tmp/cerelytic-tests/model-test
-          /tmp/cerelytic-tests/model-test
+            -o /tmp/framilton-chess-tests/model-test
+          /tmp/framilton-chess-tests/model-test
 
           python3 native/tests/test_patch_manifest.py
           python3 native/tests/test_patch_resources.py
           chmod +x native/tests/test_stockfish_artifact.sh native/tests/render_preview_smoke.sh
-          native/tests/render_preview_smoke.sh /tmp/cerelytic-tests/previews
-          bash -n native/build_native.sh native/build_apk.sh scripts/setup-fedora.sh scripts/push-github.sh scripts/verify-apk.sh native/tests/test_stockfish_artifact.sh native/tests/test_stockfish_integration.sh
+          native/tests/render_preview_smoke.sh /tmp/framilton-chess-tests/previews
+          bash -n native/build_native.sh native/build_apk.sh scripts/setup-fedora.sh scripts/push-github.sh scripts/verify-apk.sh scripts/check-framilton-identity.sh native/tests/test_stockfish_artifact.sh native/tests/test_stockfish_integration.sh
           python3 -m py_compile native/patch_manifest.py native/patch_resources.py
 
       - name: Fetch verified Stockfish 18 ARM64 engine
@@ -115,21 +131,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ -n "${ANDROID_KEYSTORE_BASE64:-}" \
+          if [[ "$GITHUB_EVENT_NAME" == "push" \
+             && -n "${ANDROID_KEYSTORE_BASE64:-}" \
              && -n "${ANDROID_KEYSTORE_PASSWORD:-}" \
              && -n "${ANDROID_KEY_ALIAS:-}" \
              && -n "${ANDROID_KEY_PASSWORD:-}" ]]; then
-            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/cerelytic-release.keystore"
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/framilton-release.keystore"
             keytool -list \
-              -keystore "$RUNNER_TEMP/cerelytic-release.keystore" \
+              -keystore "$RUNNER_TEMP/framilton-release.keystore" \
               -storepass "$ANDROID_KEYSTORE_PASSWORD" \
               -alias "$ANDROID_KEY_ALIAS" >/dev/null
             echo "stable=true" >> "$GITHUB_OUTPUT"
-            echo "keystore=$RUNNER_TEMP/cerelytic-release.keystore" >> "$GITHUB_OUTPUT"
+            echo "keystore=$RUNNER_TEMP/framilton-release.keystore" >> "$GITHUB_OUTPUT"
           else
             echo "stable=false" >> "$GITHUB_OUTPUT"
-            echo "keystore=$RUNNER_TEMP/cerelytic-development.keystore" >> "$GITHUB_OUTPUT"
-            echo "Stable signing secrets are absent. The APK will be uploaded as a workflow artifact but no release will be replaced." >> "$GITHUB_STEP_SUMMARY"
+            echo "keystore=$RUNNER_TEMP/framilton-development.keystore" >> "$GITHUB_OUTPUT"
+            echo "Using a temporary development signing key for verification; no release will be published from this run." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Build and verify signed APK
@@ -152,9 +169,9 @@ jobs:
           else
             signing_env=(
               KEYSTORE="$KEYSTORE_FILE"
-              STOREPASS=cerelytic-actions-development
-              KEYPASS=cerelytic-actions-development
-              KEY_ALIAS=cerelyticdevelopment
+              STOREPASS=framilton-actions-development
+              KEYPASS=framilton-actions-development
+              KEY_ALIAS=framiltondevelopment
             )
           fi
 
@@ -169,6 +186,9 @@ jobs:
           "$APKSIGNER_BIN" verify --verbose --print-certs "$APK_NAME"
           python3 - "$APK_NAME" <<'PY'
           import sys, zipfile
+          from pathlib import Path
+          sys.path.insert(0, str(Path("native").resolve()))
+          from patch_manifest import inspect_manifest
           with zipfile.ZipFile(sys.argv[1]) as archive:
               assert archive.testzip() is None
               required = {
@@ -178,39 +198,38 @@ jobs:
               }
               names = set(archive.namelist())
               assert required <= names, required - names
-          print("APK archive verification: PASS")
+              manifest = inspect_manifest(archive.read("AndroidManifest.xml"))
+              assert manifest["package"] == "com.framilton.knight", manifest
+              assert manifest["application_label"] == "Framilton Chess", manifest
+              metadata = archive.read("assets/BUILD-METADATA.txt")
+              assert b"product=Framilton Chess" in metadata
+              assert b"package=com.framilton.knight" in metadata
+          print("Framilton APK archive verification: PASS")
           PY
           sha256sum "$APK_NAME" | tee "$APK_NAME.sha256"
 
       - name: Upload APK workflow artifact
         uses: actions/upload-artifact@v7
         with:
-          name: CerelyticChess-v3-offline-arm64
+          name: FramiltonChess-v3-offline-arm64
           path: |
             ${{ env.APK_NAME }}
             ${{ env.APK_NAME }}.sha256
           if-no-files-found: error
           compression-level: 0
 
-      - name: Explain unsigned release mode
+      - name: Explain verification-only mode
         if: steps.signing.outputs.stable != 'true'
         shell: bash
         run: |
           cat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'
-          ## Release not updated
+          ## Verification-only build
 
-          Configure these repository secrets to publish an upgrade-compatible `v3.0.0` release:
-
-          - `ANDROID_KEYSTORE_BASE64`
-          - `ANDROID_KEYSTORE_PASSWORD`
-          - `ANDROID_KEY_ALIAS`
-          - `ANDROID_KEY_PASSWORD`
-
-          The build artifact above remains downloadable for testing. It uses a temporary development key and therefore is not suitable for future in-place upgrades.
+          This run used a temporary development signing key. The APK artifact is suitable for testing, but this workflow run did not update a release.
           SUMMARY
 
       - name: Publish v3.0.0 release
-        if: steps.signing.outputs.stable == 'true'
+        if: github.event_name == 'push' && steps.signing.outputs.stable == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -218,14 +237,14 @@ jobs:
           set -euo pipefail
           apk_sha="$(cut -d' ' -f1 "$APK_NAME.sha256")"
           cat > release-notes.md <<EOF_NOTES
-          Cerelytic Chess v3 turns the original board into a complete local-first Android chess product.
+          Framilton Chess v3 is a complete local-first Android chess product.
 
           - Multipage Home, Play, Puzzles, History, Analysis, Profile, and Settings experience
           - Device-local profiles and optional four-digit local PIN lock
           - Stockfish 18, pass-and-play, offline puzzles, hints, replay, and persistent game resume
           - Smooth tap/drag movement, legal-move markers, haptics, clocks, promotion, and board flip
           - Amber check feedback and a dedicated red checkmate result sequence
-          - Original Cerelytic brand mark, avatars, icons, and Staunton piece system
+          - Framilton identity across Android metadata and release artifacts
           - Android 10+, ARM64, fully offline, and no Android permissions
 
           APK SHA-256: \`${apk_sha}\`
@@ -235,11 +254,11 @@ jobs:
 
           if gh release view v3.0.0 >/dev/null 2>&1; then
             gh release upload v3.0.0 "$APK_NAME" "$APK_NAME.sha256" "${STOCKFISH_TAR}" --clobber
-            gh release edit v3.0.0 --title "Cerelytic Chess v3.0.0" --notes-file release-notes.md
+            gh release edit v3.0.0 --title "Framilton Chess v3.0.0" --notes-file release-notes.md
           else
             gh release create v3.0.0 \
               "$APK_NAME" "$APK_NAME.sha256" "${STOCKFISH_TAR}" \
               --target main \
-              --title "Cerelytic Chess v3.0.0" \
+              --title "Framilton Chess v3.0.0" \
               --notes-file release-notes.md
           fi

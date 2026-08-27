@@ -1,8 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
-  <title id="title">Framilton Chess launcher foreground</title>
+  <title id="title">Framilton mark</title>
   <rect x="28" y="28" width="456" height="456" rx="116" fill="#0A1834"/>
   <rect x="52" y="52" width="408" height="408" rx="96" fill="#1C64F2"/>
   <circle cx="256" cy="256" r="136" fill="none" stroke="#FFFFFF" stroke-opacity=".28" stroke-width="8"/>
   <text x="256" y="340" text-anchor="middle" font-family="system-ui,sans-serif" font-size="248" font-weight="800" fill="#FFFFFF">F</text>
-  <text x="382" y="405" text-anchor="middle" font-family="serif" font-size="72" fill="#FFFFFF">♞</text>
 </svg>

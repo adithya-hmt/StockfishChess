@@ -2,7 +2,7 @@
 
 ## 3.0.0 — 2026-08-14
 
-Cerelytic Chess v3 replaces the single-board prototype with a complete local-first chess application.
+Framilton Chess v3 replaces the single-board prototype with a complete local-first chess application.
 
 ### Added
 
@@ -13,14 +13,15 @@ Cerelytic Chess v3 replaces the single-board prototype with a complete local-fir
 - Persistent active-game resume, local game history, replay, and analysis.
 - Tap and drag input, animated moves, promotion choices, haptics, board flip, clocks, hints, undo, rematch, resign, and local export.
 - Amber check state and dedicated red checkmate presentation.
-- Original Cerelytic mark, launcher icon, avatars, controls, and Staunton piece set.
+- Framilton identity layer, launcher treatment, controls, and Staunton piece set.
 - Dedicated worker thread for Stockfish move, hint, and analysis searches.
 - Fedora one-command setup/build/install script and signed GitHub Actions release workflow.
 
 ### Changed
 
-- Android package moved to `com.cerelytic.knight` so v3 can install beside the legacy prototype.
-- APK name is now `CerelyticChess-v3-offline-arm64.apk`.
+- Android package is `com.framilton.knight` for a clean Framilton identity boundary.
+- APK name is `FramiltonChess-v3-offline-arm64.apk`.
+- Build, signing, release, and local cache defaults use Framilton naming.
 
 ### Security and privacy
 

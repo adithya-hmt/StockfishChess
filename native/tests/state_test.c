@@ -9,8 +9,8 @@ int main(void) {
     CerHistory h;
     int i;
     const char *dir = "/tmp";
-    unlink("/tmp/cerelytic-v3.state");
-    unlink("/tmp/cerelytic-v3.state.tmp");
+    unlink("/tmp/framilton-v3.state");
+    unlink("/tmp/framilton-v3.state.tmp");
     cer_state_defaults(&a);
     assert(a.active_profile == -1);
     assert(a.haptics_enabled == 1);
@@ -31,7 +31,7 @@ int main(void) {
     assert(b.profile_count == 1);
     assert(strcmp(b.profiles[0].name, "ADI") == 0);
     assert(b.history_count == CER_MAX_HISTORY);
-    unlink("/tmp/cerelytic-v3.state");
+    unlink("/tmp/framilton-v3.state");
     puts("state tests: PASS");
     return 0;
 }

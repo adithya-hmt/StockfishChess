@@ -1,5 +1,11 @@
-# Cerelytic Chess brand asset pack
+# Framilton Chess identity assets
 
-This folder contains the production launcher icon, scalable mark and wordmark, splash lockup, monochrome launcher treatment, abstract local-profile avatars, original Staunton piece SVGs, palette sheet, and release banner.
+This directory contains the presentation assets used by Framilton Chess.
 
-All assets are designed for this project and may be modified under the repository license. They intentionally avoid third-party chess service branding.
+- `release-banner.svg` — repository/release banner.
+- `splash-lockup.svg` — Framilton Chess lockup.
+- `launcher-foreground.svg` and `launcher-monochrome.svg` — launcher source artwork.
+- `tokens.json` — identity colors and spacing tokens.
+- `avatars/` and `pieces/` — application artwork used by the chess UI.
+
+The Android launcher raster lives at `native/template/res/mipmap/icon.png`.

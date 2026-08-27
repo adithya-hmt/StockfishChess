@@ -6,7 +6,7 @@ static void render_settings(App*a,CerCanvas*c){
     r=make_rect(m,top+px(c->width,230),c->width-2*m,px(c->width,60));settings_row(a,c,r,HIT_SETTING_AUTO_QUEEN,"AUTO-QUEEN","Promote to queen without a chooser.",a->saved.auto_queen,0);
     r=make_rect(m,top+px(c->width,298),c->width-2*m,px(c->width,60));settings_row(a,c,r,HIT_SETTING_MOTION,"REDUCE MOTION","Keep transitions short and direct.",a->saved.reduce_motion,0);
     cer_draw_text(c,m,top+px(c->width,383),"APPEARANCE",px(c->width,13),muted());r=make_rect(m,top+px(c->width,409),c->width-2*m,px(c->width,60));settings_row(a,c,r,HIT_SETTING_BOARD,"BOARD THEME","Forest, walnut or ocean squares.",a->saved.board_theme,1);
-    r=make_rect(m,top+px(c->width,477),c->width-2*m,px(c->width,60));settings_row(a,c,r,HIT_SETTING_PIECES,"PIECE SET","Original Cerelytic Staunton vectors.",1,0);
+    r=make_rect(m,top+px(c->width,477),c->width-2*m,px(c->width,60));settings_row(a,c,r,HIT_SETTING_PIECES,"PIECE SET","Framilton Staunton vectors.",1,0);
     cer_draw_text(c,m,top+px(c->width,562),"LOCAL DATA",px(c->width,13),muted());r=make_rect(m,top+px(c->width,588),c->width-2*m,px(c->width,60));card_outline(c,r,px(c->width,12),surface(),red_dim());cer_draw_icon(c,CER_ICON_RESTART,r.x+px(c->width,29),r.y+r.h/2,px(c->width,22),cer_rgba(255,153,158,255),surface());cer_draw_text(c,r.x+px(c->width,55),r.y+px(c->width,11),"RESET LOCAL DATA",px(c->width,15),cer_rgba(255,190,194,255));cer_draw_text(c,r.x+px(c->width,55),r.y+px(c->width,34),"Profiles, history and settings are erased.",px(c->width,10),muted());hit_add(a,HIT_SETTING_RESET,r);
 }
 

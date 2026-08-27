@@ -14,11 +14,11 @@ else
   ARTIFACT="$PROJECT/stockfish-android-arm64-universal.zip"
 fi
 
-OUT="${APK_OUT:-$PROJECT/CerelyticChess-v3-offline-arm64.apk}"
+OUT="${APK_OUT:-$PROJECT/FramiltonChess-v3-offline-arm64.apk}"
 KEYSTORE="${KEYSTORE:-$BUILD/local-signing.keystore}"
-STOREPASS="${STOREPASS:-cerelytic-local-release}"
+STOREPASS="${STOREPASS:-framilton-local-release}"
 KEYPASS="${KEYPASS:-$STOREPASS}"
-ALIAS="${KEY_ALIAS:-cerelyticlocal}"
+ALIAS="${KEY_ALIAS:-framiltonlocal}"
 ENGINE_LABEL="${ENGINE_LABEL:-Stockfish (bundled)}"
 ENGINE_REF="${ENGINE_REF:-}"
 BUILD_DATE="${BUILD_DATE:-$(date -u +%F)}"
@@ -52,7 +52,7 @@ python3 "$ROOT/patch_manifest.py" "$ROOT/template/AndroidManifest.xml" "$BUILD/A
 python3 "$ROOT/patch_resources.py" "$ROOT/template/resources.arsc" "$BUILD/resources.arsc"
 
 rm -rf "$STAGE"
-mkdir -p "$STAGE/lib/arm64-v8a" "$STAGE/res/mipmap" "$STAGE/assets/brand"
+mkdir -p "$STAGE/lib/arm64-v8a" "$STAGE/res/mipmap" "$STAGE/assets"
 cp "$BUILD/AndroidManifest.xml" "$STAGE/AndroidManifest.xml"
 cp "$BUILD/resources.arsc" "$STAGE/resources.arsc"
 cp "$ROOT/template/res/mipmap/icon.png" "$STAGE/res/mipmap/icon.png"
@@ -61,15 +61,8 @@ unzip -p "$ARTIFACT" stockfish-android-arm64-universal > "$STAGE/lib/arm64-v8a/l
 unzip -p "$ARTIFACT" Copying.txt > "$STAGE/assets/stockfish-COPYING.txt"
 chmod 755 "$STAGE/lib/arm64-v8a/libstockfish.so"
 
-if [[ -f "$PROJECT/brand/brand-guidelines.md" ]]; then
-  cp "$PROJECT/brand/brand-guidelines.md" "$STAGE/assets/brand/brand-guidelines.md"
-fi
-if [[ -f "$PROJECT/brand/cerelytic-mark.svg" ]]; then
-  cp "$PROJECT/brand/cerelytic-mark.svg" "$STAGE/assets/brand/cerelytic-mark.svg"
-fi
-
 cat > "$STAGE/assets/NOTICE.txt" <<EOF_NOTICE
-Cerelytic Chess v3.0.0
+Framilton Chess v3.0.0
 
 A fully local Android chess product with profiles, optional local PIN lock,
 Stockfish play, pass-and-play, offline puzzles, game history, replay,
@@ -87,9 +80,9 @@ engine is distributed with the release or Fedora bundle.
 EOF_NOTICE
 
 cat > "$STAGE/assets/BUILD-METADATA.txt" <<EOF_METADATA
-product=Cerelytic Chess
+product=Framilton Chess
 version=3.0.0
-package=com.cerelytic.knight
+package=com.framilton.knight
 minimum_android=29
 abi=arm64-v8a
 engine=${ENGINE_LABEL}
@@ -132,7 +125,7 @@ if [[ ! -f "$KEYSTORE" ]]; then
   keytool -genkeypair -noprompt \
     -keystore "$KEYSTORE" -storepass "$STOREPASS" -keypass "$KEYPASS" \
     -alias "$ALIAS" -keyalg RSA -keysize 2048 -validity 3650 \
-    -dname "CN=Cerelytic Chess Local, OU=Android, O=Cerelytic, L=Local, ST=Local, C=IN" \
+    -dname "CN=Framilton Chess Local, OU=Android, O=Framilton, L=Local, ST=Local, C=IN" \
     >/dev/null 2>&1
 fi
 

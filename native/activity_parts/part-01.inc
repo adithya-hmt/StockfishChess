@@ -133,19 +133,19 @@ typedef struct {
 
 static App g_app;
 
-/* Original Cerelytic palette. Stored RGBA in little-endian Android buffers. */
-static uint32_t bg(void){return cer_rgba(18,20,18,255);} 
-static uint32_t bg_deep(void){return cer_rgba(12,14,13,255);} 
-static uint32_t surface(void){return cer_rgba(31,35,31,255);} 
-static uint32_t surface2(void){return cer_rgba(40,45,40,255);} 
-static uint32_t surface3(void){return cer_rgba(53,59,52,255);} 
-static uint32_t stroke(void){return cer_rgba(66,73,65,255);} 
-static uint32_t ink(void){return cer_rgba(244,247,242,255);} 
-static uint32_t muted(void){return cer_rgba(169,178,167,255);} 
-static uint32_t green(void){return cer_rgba(112,184,74,255);} 
-static uint32_t green_dim(void){return cer_rgba(47,87,47,255);} 
-static uint32_t mint(void){return cer_rgba(118,216,167,255);} 
-static uint32_t gold(void){return cer_rgba(221,190,80,255);} 
+/* Framilton navy/blue palette. Stored RGBA in little-endian Android buffers. */
+static uint32_t bg(void){return cer_rgba(10,24,52,255);} 
+static uint32_t bg_deep(void){return cer_rgba(6,14,31,255);} 
+static uint32_t surface(void){return cer_rgba(18,35,67,255);} 
+static uint32_t surface2(void){return cer_rgba(24,49,90,255);} 
+static uint32_t surface3(void){return cer_rgba(34,61,105,255);} 
+static uint32_t stroke(void){return cer_rgba(52,83,132,255);} 
+static uint32_t ink(void){return cer_rgba(248,250,252,255);} 
+static uint32_t muted(void){return cer_rgba(148,163,184,255);} 
+static uint32_t green(void){return cer_rgba(28,100,242,255);} 
+static uint32_t green_dim(void){return cer_rgba(21,52,107,255);} 
+static uint32_t mint(void){return cer_rgba(96,165,250,255);} 
+static uint32_t gold(void){return cer_rgba(250,204,21,255);} 
 static uint32_t amber(void){return cer_rgba(242,157,73,255);} 
 static uint32_t red(void){return cer_rgba(229,72,77,255);} 
 static uint32_t red_dim(void){return cer_rgba(118,38,45,255);} 
@@ -167,7 +167,7 @@ static void format_clock(int64_t ms,char out[12]){int total,mins,secs;char n[12]
 static void format_score(int cp,int mate,char out[24]){char n[16];out[0]=0;if(mate){append_text(out,24,"MATE ");int_text(mate,n,sizeof(n));append_text(out,24,n);return;}if(cp>=0)append_text(out,24,"+");int_text(cp/100,n,sizeof(n));append_text(out,24,n);append_text(out,24,".");{int rem=i_abs(cp%100);if(rem<10)append_text(out,24,"0");int_text(rem,n,sizeof(n));append_text(out,24,n);}}
 static const char* level_name(int l){return l<=0?"CALM":(l==1?"SHARP":"RUTHLESS");}
 static int level_think_ms(int l){return l<=0?220:(l==1?520:1050);}
-static uint32_t accent_for(int i){static const unsigned r[5]={112,78,187,214,80};static const unsigned g[5]={184,153,126,166,145};static const unsigned b[5]={74,198,203,76,214};i=i_clamp(i,0,4);return cer_rgba(r[i],g[i],b[i],255);}
+static uint32_t accent_for(int i){static const unsigned r[5]={28,78,187,214,80};static const unsigned g[5]={100,153,126,166,145};static const unsigned b[5]={242,198,203,76,214};i=i_clamp(i,0,4);return cer_rgba(r[i],g[i],b[i],255);}
 static void set_status(App*a,const char*s){cer_copy_text(a->status,sizeof(a->status),s);}
 static void set_toast(App*a,const char*s,int kind){cer_copy_text(a->toast,sizeof(a->toast),s);a->toast_kind=kind;a->toast_until_ms=now_ms()+2600;}
 

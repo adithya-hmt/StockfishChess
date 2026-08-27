@@ -5,7 +5,7 @@
 static void stat_box(CerCanvas*c,Rect r,const char*value,const char*label,uint32_t color){cer_fill_round_rect(c,r.x,r.y,r.w,r.h,px(c->width,11),surface2());cer_draw_text_center(c,r.x+r.w/2,r.y+px(c->width,12),value,px(c->width,20),color);cer_draw_text_center(c,r.x+r.w/2,r.y+px(c->width,39),label,px(c->width,10),muted());}
 static void render_home(App*a,CerCanvas*c){
     const CerProfile*p=cer_active_profile_const(&a->saved);int m=page_margin(c->width),top=topbar_h(c->width)+px(c->width,6),content_bottom=c->height-nav_h(c->width)-px(c->width,10);Rect hero,r;char n[20],greet[40];
-    draw_topbar(a,c,"CERELYTIC",0,1);draw_profile_badge(c,p,m,top,px(c->width,48));cer_copy_text(greet,sizeof(greet),"READY, ");append_text(greet,sizeof(greet),p?p->name:"PLAYER");cer_draw_text(c,m,top+px(c->width,68),greet,px(c->width,24),ink());cer_draw_text(c,m,top+px(c->width,98),"What are we calculating today?",px(c->width,12),muted());
+    draw_topbar(a,c,"FRAMILTON",0,1);draw_profile_badge(c,p,m,top,px(c->width,48));cer_copy_text(greet,sizeof(greet),"READY, ");append_text(greet,sizeof(greet),p?p->name:"PLAYER");cer_draw_text(c,m,top+px(c->width,68),greet,px(c->width,24),ink());cer_draw_text(c,m,top+px(c->width,98),"What are we calculating today?",px(c->width,12),muted());
     hero=make_rect(m,top+px(c->width,128),c->width-2*m,px(c->width,154));card_outline(c,hero,px(c->width,20),green_dim(),cer_rgba(112,184,74,120));
     cer_draw_brand_mark(c,hero.x+px(c->width,55),hero.y+px(c->width,58),px(c->width,72),green(),ink(),surface());
     cer_draw_text(c,hero.x+px(c->width,106),hero.y+px(c->width,27),a->saved.active_game?"RESUME YOUR GAME":"PLAY STOCKFISH",px(c->width,22),ink());

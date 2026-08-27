@@ -1,5 +1,5 @@
-#ifndef CERELYTIC_APP_MODEL_H
-#define CERELYTIC_APP_MODEL_H
+#ifndef FRAMILTON_APP_MODEL_H
+#define FRAMILTON_APP_MODEL_H
 
 #ifdef SF_FREESTANDING
 typedef __SIZE_TYPE__ size_t;
