@@ -7,16 +7,29 @@ on:
     paths:
       - "native/**"
       - "brand/**"
+      - "docs/**"
       - "scripts/**"
       - ".github/workflows/build.yml"
       - "README.md"
+      - "CHANGELOG.md"
+      - "LICENSE"
+  pull_request:
+    branches: [main]
+    paths:
+      - "native/**"
+      - "brand/**"
+      - "docs/**"
+      - "scripts/**"
+      - ".github/workflows/build.yml"
+      - "README.md"
+      - "CHANGELOG.md"
       - "LICENSE"
 
 permissions:
   contents: write
 
 concurrency:
-  group: framilton-chess-v3-apk
+  group: framilton-chess-v3-apk-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -118,7 +131,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ -n "${ANDROID_KEYSTORE_BASE64:-}" \
+          if [[ "$GITHUB_EVENT_NAME" == "push" \
+             && -n "${ANDROID_KEYSTORE_BASE64:-}" \
              && -n "${ANDROID_KEYSTORE_PASSWORD:-}" \
              && -n "${ANDROID_KEY_ALIAS:-}" \
              && -n "${ANDROID_KEY_PASSWORD:-}" ]]; then
@@ -132,7 +146,7 @@ jobs:
           else
             echo "stable=false" >> "$GITHUB_OUTPUT"
             echo "keystore=$RUNNER_TEMP/framilton-development.keystore" >> "$GITHUB_OUTPUT"
-            echo "Stable signing secrets are absent. The APK will be uploaded as a workflow artifact but no release will be replaced." >> "$GITHUB_STEP_SUMMARY"
+            echo "Using a temporary development signing key for verification; no release will be published from this run." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Build and verify signed APK
@@ -204,25 +218,18 @@ jobs:
           if-no-files-found: error
           compression-level: 0
 
-      - name: Explain unsigned release mode
+      - name: Explain verification-only mode
         if: steps.signing.outputs.stable != 'true'
         shell: bash
         run: |
           cat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'
-          ## Release not updated
+          ## Verification-only build
 
-          Configure these repository secrets to publish an upgrade-compatible `v3.0.0` release:
-
-          - `ANDROID_KEYSTORE_BASE64`
-          - `ANDROID_KEYSTORE_PASSWORD`
-          - `ANDROID_KEY_ALIAS`
-          - `ANDROID_KEY_PASSWORD`
-
-          The build artifact above remains downloadable for testing. It uses a temporary development key and therefore is not suitable for future in-place upgrades.
+          This run used a temporary development signing key. The APK artifact is suitable for testing, but this workflow run did not update a release.
           SUMMARY
 
       - name: Publish v3.0.0 release
-        if: steps.signing.outputs.stable == 'true'
+        if: github.event_name == 'push' && steps.signing.outputs.stable == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
