@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT_DIR="${1:-$(mktemp -d)}"
-BIN="${TMPDIR:-/tmp}/cerelytic-v3-preview-test"
+BIN="${TMPDIR:-/tmp}/framilton-v3-preview-test"
 mkdir -p "$OUT_DIR"
 
 clang -std=c11 -O2 -Wall -Wextra -Werror -pthread \
@@ -32,8 +32,6 @@ for path in paths:
     assert data.startswith(b"P6\n360 800\n255\n"), path
     payload = data.split(b"\n", 3)[3]
     assert len(payload) == 360 * 800 * 3, (path, len(payload))
-    # A blank or uniformly corrupted renderer is not a preview, despite humanity's
-    # long tradition of calling screenshots "design validation".
     sample = payload[::997]
     assert len(set(sample)) > 8, (path, len(set(sample)))
 print("UI preview smoke tests: PASS")
