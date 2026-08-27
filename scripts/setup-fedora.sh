@@ -208,9 +208,9 @@ chmod +x native/build_native.sh native/build_apk.sh native/tests/render_preview_
 ensure_stockfish_artifact
 run_tests
 
-printf '\n==> Building Cerelytic Chess v3 APK\n'
+printf '\n==> Building Chess v3 APK\n'
 mkdir -p dist "$HOME/.local/share/cerelytic-chess"
-OUTPUT="$ROOT/dist/CerelyticChess-v3-offline-arm64.apk"
+OUTPUT="$ROOT/dist/Chess-v3-offline-arm64.apk"
 DEFAULT_KEYSTORE="$HOME/.local/share/cerelytic-chess/release.keystore"
 BUNDLED_KEYSTORE="$ROOT/signing/cerelytic-v3-release.keystore"
 KEYSTORE_PATH="${KEYSTORE:-$DEFAULT_KEYSTORE}"
