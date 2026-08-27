@@ -19,13 +19,13 @@ static void draw_player_row(App*a,CerCanvas*c,Rect r,int white,int top){
     else pill(c,make_rect(r.x+r.w-px(c->width,58),r.y+px(c->width,13),px(c->width,48),px(c->width,29)),active?"TURN":"READY",active?green_dim():surface3(),active?mint():muted());
 }
 
-static void render_splash(App*a,CerCanvas*c){int mark=px(c->width,122),cy=c->height/2-px(c->width,78);(void)a;cer_draw_brand_mark(c,c->width/2,cy,mark,green(),ink(),surface());cer_draw_text_center(c,c->width/2,cy+px(c->width,78),"CERELYTIC",px(c->width,31),ink());cer_draw_text_center(c,c->width/2,cy+px(c->width,116),"CHESS, ENTIRELY ON YOUR DEVICE",px(c->width,12),muted());cer_fill_round_rect(c,c->width/2-px(c->width,36),cy+px(c->width,158),px(c->width,72),px(c->width,5),px(c->width,3),green());}
+static void render_splash(App*a,CerCanvas*c){int mark=px(c->width,122),cy=c->height/2-px(c->width,78);(void)a;cer_draw_brand_mark(c,c->width/2,cy,mark,green(),ink(),surface());cer_draw_text_center(c,c->width/2,cy+px(c->width,78),"FRAMILTON",px(c->width,31),ink());cer_draw_text_center(c,c->width/2,cy+px(c->width,116),"CHESS, ENTIRELY ON YOUR DEVICE",px(c->width,12),muted());cer_fill_round_rect(c,c->width/2-px(c->width,36),cy+px(c->width,158),px(c->width,72),px(c->width,5),px(c->width,3),green());}
 
 static void render_onboard(App*a,CerCanvas*c){
     static const char*titles[3]={"PLAY WITHOUT THE CLOUD","STOCKFISH, RIGHT HERE","YOUR BOARD. YOUR DATA."};
     static const char*body[3]={"Profiles, games, puzzles and settings stay on this device. No account server. No tracking theater.","Challenge local Stockfish, tune its strength and get hints without sending a position anywhere.","Save games, replay every move, analyze locally and protect profiles with a device-local PIN."};
     int m=page_margin(c->width),top=safe_top(c->width)+px(c->width,28),i;Rect hero,next,skip;CerIcon icon=a->onboarding_page==0?CER_ICON_LOCK:(a->onboarding_page==1?CER_ICON_ANALYSIS:CER_ICON_HISTORY);
-    cer_draw_brand_mark(c,m+px(c->width,22),top+px(c->width,20),px(c->width,42),green(),ink(),surface());cer_draw_text(c,m+px(c->width,52),top+px(c->width,10),"CERELYTIC CHESS",px(c->width,18),ink());
+    cer_draw_brand_mark(c,m+px(c->width,22),top+px(c->width,20),px(c->width,42),green(),ink(),surface());cer_draw_text(c,m+px(c->width,52),top+px(c->width,10),"FRAMILTON CHESS",px(c->width,18),ink());
     hero=make_rect(m,top+px(c->width,82),c->width-2*m,px(c->width,310));card_outline(c,hero,px(c->width,22),surface(),stroke());
     cer_fill_circle(c,c->width/2,hero.y+px(c->width,94),px(c->width,49),green_dim());cer_draw_icon(c,icon,c->width/2,hero.y+px(c->width,94),px(c->width,46),mint(),green_dim());
     cer_draw_text_center(c,c->width/2,hero.y+px(c->width,170),titles[a->onboarding_page],px(c->width,22),ink());
