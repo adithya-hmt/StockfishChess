@@ -1,7 +1,7 @@
 #include "activity_parts/part-01.inc"
+#include "framilton_identity.h"
 #include "activity_parts/part-02.inc"
 #include "activity_parts/part-03.inc"
-#include "framilton_identity.h"
 #include "activity_parts/part-04.inc"
 #include "activity_parts/part-05.inc"
 #include "activity_parts/part-06.inc"
