@@ -4,9 +4,9 @@ import argparse
 import pathlib
 
 OLD_PACKAGE = 'org.yourorg.cnfgtest'
-NEW_PACKAGE = 'com.cerelytic.knight'
+NEW_PACKAGE = 'com.framilton.knight'
 OLD_LABEL = 'cnfgtest'
-NEW_LABEL = 'ChessApp'
+NEW_LABEL = 'FramChess'
 
 
 def _replace_exact(data: bytes, old: bytes, new: bytes, expected: int, label: str) -> bytes:
