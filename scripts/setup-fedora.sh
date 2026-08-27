@@ -66,7 +66,7 @@ fi
 
 if (( ! SKIP_SDK )); then
   printf '\n==> Installing the official Android command-line SDK\n'
-  cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/cerelytic-chess"
+  cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/framilton-chess"
   archive="$cache_dir/$CMDLINE_ZIP"
   mkdir -p "$cache_dir" "$SDK_ROOT/cmdline-tools"
 
@@ -142,7 +142,7 @@ detect_engine_metadata() {
 
 ensure_stockfish_artifact() {
   local artifact="$ROOT/stockfish-android-arm64-universal.zip"
-  local cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/cerelytic-chess"
+  local cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/framilton-chess"
   local tarball="$cache_dir/$STOCKFISH_TAR"
   local unpack normalized engine license
   if [[ -f "$artifact" ]] \
@@ -176,7 +176,7 @@ ensure_stockfish_artifact() {
 }
 
 run_tests() {
-  local t="${TMPDIR:-/tmp}/cerelytic-v3-tests"
+  local t="${TMPDIR:-/tmp}/framilton-v3-tests"
   mkdir -p "$t"
   printf '\n==> Running native, persistence, engine, packaging, and renderer tests\n'
   clang -std=c11 -Wall -Wextra -Werror \
@@ -208,19 +208,19 @@ chmod +x native/build_native.sh native/build_apk.sh native/tests/render_preview_
 ensure_stockfish_artifact
 run_tests
 
-printf '\n==> Building Chess v3 APK\n'
-mkdir -p dist "$HOME/.local/share/cerelytic-chess"
-OUTPUT="$ROOT/dist/Chess-v3-offline-arm64.apk"
-DEFAULT_KEYSTORE="$HOME/.local/share/cerelytic-chess/release.keystore"
-BUNDLED_KEYSTORE="$ROOT/signing/cerelytic-v3-release.keystore"
+printf '\n==> Building Framilton Chess v3 APK\n'
+mkdir -p dist "$HOME/.local/share/framilton-chess"
+OUTPUT="$ROOT/dist/FramiltonChess-v3-offline-arm64.apk"
+DEFAULT_KEYSTORE="$HOME/.local/share/framilton-chess/release.keystore"
+BUNDLED_KEYSTORE="$ROOT/signing/framilton-v3-release.keystore"
 KEYSTORE_PATH="${KEYSTORE:-$DEFAULT_KEYSTORE}"
-STORE_PASSWORD="${STOREPASS:-cerelytic-local-release}"
+STORE_PASSWORD="${STOREPASS:-framilton-local-release}"
 KEY_PASSWORD="${KEYPASS:-$STORE_PASSWORD}"
-KEY_ALIAS_VALUE="${KEY_ALIAS:-cerelyticlocal}"
+KEY_ALIAS_VALUE="${KEY_ALIAS:-framiltonlocal}"
 
-# The Fedora bundle carries the compatibility key used for the downloadable v3
-# APK. The public source archive deliberately does not. Install it into the
-# user's private app-specific directory only when no explicit KEYSTORE was set.
+# The Fedora bundle may carry the compatibility key used for the downloadable
+# Framilton APK. The public source archive deliberately does not. Install it into
+# the user's private app-specific directory only when no explicit KEYSTORE was set.
 if [[ -z "${KEYSTORE:-}" && -f "$BUNDLED_KEYSTORE" ]]; then
   mkdir -p "$(dirname "$DEFAULT_KEYSTORE")"
   if [[ ! -f "$DEFAULT_KEYSTORE" ]]; then
@@ -277,9 +277,9 @@ if (( INSTALL_APK )); then
   fi
   if ! adb "${adb_args[@]}" install -r "$OUTPUT"; then
     cat >&2 <<'MSG'
-Android rejected the update, usually because the installed APK was signed by a
-different local key. Uninstall com.cerelytic.knight and rerun with --install.
-Uninstalling deletes the old app's local profiles and game history.
+Android rejected the install or update. If a conflicting development build is
+installed, uninstall com.framilton.knight and rerun with --install.
+Uninstalling deletes that app's local profiles and game history.
 MSG
     exit 5
   fi
@@ -287,4 +287,4 @@ fi
 
 printf '\nBuilt: %s\n' "$OUTPUT"
 printf 'Signing key retained at: %s\n' "$KEYSTORE_PATH"
-printf 'Keep that key private; losing it prevents in-place Android updates. Humanity invented this ceremony for good reasons, mostly.\n'
+printf 'Keep that key private; losing it prevents in-place Android updates.\n'
