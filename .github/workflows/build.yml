@@ -41,6 +41,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/framilton-chess-tests
+          chmod +x scripts/check-framilton-identity.sh
+          ./scripts/check-framilton-identity.sh
+
           clang -std=c11 -Wall -Wextra -Werror \
             native/tests/core_test.c native/core.c \
             -o /tmp/framilton-chess-tests/core-test
@@ -65,7 +68,7 @@ jobs:
           python3 native/tests/test_patch_resources.py
           chmod +x native/tests/test_stockfish_artifact.sh native/tests/render_preview_smoke.sh
           native/tests/render_preview_smoke.sh /tmp/framilton-chess-tests/previews
-          bash -n native/build_native.sh native/build_apk.sh scripts/setup-fedora.sh scripts/push-github.sh scripts/verify-apk.sh native/tests/test_stockfish_artifact.sh native/tests/test_stockfish_integration.sh
+          bash -n native/build_native.sh native/build_apk.sh scripts/setup-fedora.sh scripts/push-github.sh scripts/verify-apk.sh scripts/check-framilton-identity.sh native/tests/test_stockfish_artifact.sh native/tests/test_stockfish_integration.sh
           python3 -m py_compile native/patch_manifest.py native/patch_resources.py
 
       - name: Fetch verified Stockfish 18 ARM64 engine
