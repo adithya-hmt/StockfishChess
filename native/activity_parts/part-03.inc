@@ -31,8 +31,8 @@ static void run_analysis(App*a){if(!a)return;if(a->worker_busy){set_toast(a,"STO
 
 static int write_export(App*a,const SfGame*g){
     char path[1024],text[4600],moves[4200];const char*cursor;size_t d,n;int fd;if(!a||!g||!a->export_dir[0])return 0;
-    d=s_len(a->export_dir);if(d+30>=sizeof(path))return 0;memcpy(path,a->export_dir,d);if(d&&path[d-1]!='/')path[d++]='/';cer_copy_text(path+d,sizeof(path)-d,"Cerelytic-last-game.pgn");
-    cer_copy_text(moves,sizeof(moves),g->history);text[0]=0;append_text(text,sizeof(text),"[Event \"Cerelytic Local Game\"]\n[Site \"On Device\"]\n[Result \"");
+    d=s_len(a->export_dir);if(d+30>=sizeof(path))return 0;memcpy(path,a->export_dir,d);if(d&&path[d-1]!='/')path[d++]='/';cer_copy_text(path+d,sizeof(path)-d,"Framilton-last-game.pgn");
+    cer_copy_text(moves,sizeof(moves),g->history);text[0]=0;append_text(text,sizeof(text),"[Event \"Framilton Local Game\"]\n[Site \"On Device\"]\n[Result \"");
     append_text(text,sizeof(text),a->result==RESULT_WHITE?"1-0":(a->result==RESULT_BLACK?"0-1":"1/2-1/2"));append_text(text,sizeof(text),"\"]\n\n{ UCI move log } ");append_text(text,sizeof(text),moves);append_text(text,sizeof(text),"\n");
     fd=open(path,O_WRONLY|O_CREAT|O_TRUNC,0600);if(fd<0)return 0;cursor=text;n=s_len(cursor);while(n){ssize_t w=write(fd,cursor,n);if(w<=0){close(fd);return 0;}n-=(size_t)w;cursor+=w;}close(fd);return 1;
 }
