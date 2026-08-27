@@ -1,5 +1,5 @@
-#ifndef CERELYTIC_FONT_DATA_H
-#define CERELYTIC_FONT_DATA_H
+#ifndef FRAMILTON_FONT_DATA_H
+#define FRAMILTON_FONT_DATA_H
 #include "font_data_parts/part-01.inc"
 #include "font_data_parts/part-02.inc"
 #include "font_data_parts/part-03.inc"
