@@ -20,6 +20,9 @@ static const char *chess_debranded_label(const char *text) {
         chess_label_equals(text, "CERELYTIC CHESS")) {
         return "CHESS";
     }
+    if (chess_label_equals(text, "CERELYTIC STAUNTON IS ACTIVE")) {
+        return "STAUNTON PIECES ARE ACTIVE";
+    }
     return text;
 }
 
@@ -42,8 +45,13 @@ static void chess_draw_brand_mark(
     cer_draw_icon(c, CER_ICON_BOARD, cx, cy, size, accent, surface);
 }
 
+static void chess_set_toast(App *a, const char *message, int tone) {
+    set_toast(a, chess_debranded_label(message), tone);
+}
+
 #define cer_draw_text chess_draw_text
 #define cer_draw_text_center chess_draw_text_center
 #define cer_draw_brand_mark chess_draw_brand_mark
+#define set_toast chess_set_toast
 
 #endif
