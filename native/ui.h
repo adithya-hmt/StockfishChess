@@ -1,5 +1,5 @@
-#ifndef CERELYTIC_UI_H
-#define CERELYTIC_UI_H
+#ifndef FRAMILTON_UI_H
+#define FRAMILTON_UI_H
 #include "platform.h"
 #include "core.h"
 
