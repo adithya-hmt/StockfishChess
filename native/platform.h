@@ -1,5 +1,5 @@
-#ifndef CERELYTIC_PLATFORM_H
-#define CERELYTIC_PLATFORM_H
+#ifndef FRAMILTON_PLATFORM_H
+#define FRAMILTON_PLATFORM_H
 
 /* Minimal Android and libc ABI declarations. Android supplies these symbols at
  * runtime. The freestanding build keeps the project usable on Fedora without a
