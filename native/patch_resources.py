@@ -6,7 +6,7 @@ import pathlib
 OLD_PACKAGE = 'org.yourorg.cnfgtest'
 NEW_PACKAGE = 'com.cerelytic.knight'
 OLD_LABEL = 'cnfgtest'
-NEW_LABEL = 'CerChess'
+NEW_LABEL = 'ChessApp'
 
 
 def _replace_exact(data: bytes, old: bytes, new: bytes, expected: int, label: str) -> bytes:
