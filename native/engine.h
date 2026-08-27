@@ -1,5 +1,5 @@
-#ifndef CERELYTIC_ENGINE_H
-#define CERELYTIC_ENGINE_H
+#ifndef FRAMILTON_ENGINE_H
+#define FRAMILTON_ENGINE_H
 #include "platform.h"
 #include "core.h"
 
