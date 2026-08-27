@@ -14,5 +14,5 @@ a = 'com.cerelytic.knight'.encode('utf-16le')
 assert data.count(a) == 1
 assert b'cnfgtest' not in data
 assert 'cnfgtest'.encode('utf-16le') not in data
-assert b'CerChess' in data
+assert b'ChessApp' in data
 print('resource patch test: PASS')
