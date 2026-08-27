@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-APK="${1:-$ROOT/dist/CerelyticChess-v3-offline-arm64.apk}"
+APK="${1:-$ROOT/dist/Chess-v3-offline-arm64.apk}"
 ENGINE_ARTIFACT="${2:-$ROOT/stockfish-android-arm64-universal.zip}"
 
 [[ -f "$APK" ]] || { echo "APK not found: $APK" >&2; exit 2; }
@@ -33,14 +33,15 @@ with zipfile.ZipFile(apk) as archive:
     assert required <= names, required - names
     manifest = inspect_manifest(archive.read("AndroidManifest.xml"))
     assert manifest["package"] == "com.cerelytic.knight", manifest
-    assert manifest["application_label"] == "Cerelytic Chess", manifest
-    assert manifest["activity_label"] == "Cerelytic Chess", manifest
+    assert manifest["application_label"] == "Chess", manifest
+    assert manifest["activity_label"] == "Chess", manifest
     assert manifest["lib_name"] == "sf_chess", manifest
     assert manifest["min_sdk"] == 29 and manifest["target_sdk"] == 29, manifest
     assert manifest["permissions"] == [], manifest
     assert manifest["debuggable"] is False, manifest
     embedded = archive.read("lib/arm64-v8a/libstockfish.so")
     metadata_bytes = archive.read("assets/BUILD-METADATA.txt")
+    assert b"product=Chess" in metadata_bytes
     assert b"version=3.0.0" in metadata_bytes
     metadata = {}
     for line in metadata_bytes.decode("utf-8").splitlines():
