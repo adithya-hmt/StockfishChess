@@ -14,11 +14,11 @@ else
   ARTIFACT="$PROJECT/stockfish-android-arm64-universal.zip"
 fi
 
-OUT="${APK_OUT:-$PROJECT/Chess-v3-offline-arm64.apk}"
+OUT="${APK_OUT:-$PROJECT/FramiltonChess-v3-offline-arm64.apk}"
 KEYSTORE="${KEYSTORE:-$BUILD/local-signing.keystore}"
-STOREPASS="${STOREPASS:-cerelytic-local-release}"
+STOREPASS="${STOREPASS:-framilton-local-release}"
 KEYPASS="${KEYPASS:-$STOREPASS}"
-ALIAS="${KEY_ALIAS:-cerelyticlocal}"
+ALIAS="${KEY_ALIAS:-framiltonlocal}"
 ENGINE_LABEL="${ENGINE_LABEL:-Stockfish (bundled)}"
 ENGINE_REF="${ENGINE_REF:-}"
 BUILD_DATE="${BUILD_DATE:-$(date -u +%F)}"
@@ -62,7 +62,7 @@ unzip -p "$ARTIFACT" Copying.txt > "$STAGE/assets/stockfish-COPYING.txt"
 chmod 755 "$STAGE/lib/arm64-v8a/libstockfish.so"
 
 cat > "$STAGE/assets/NOTICE.txt" <<EOF_NOTICE
-Chess v3.0.0
+Framilton Chess v3.0.0
 
 A fully local Android chess product with profiles, optional local PIN lock,
 Stockfish play, pass-and-play, offline puzzles, game history, replay,
@@ -80,9 +80,9 @@ engine is distributed with the release or Fedora bundle.
 EOF_NOTICE
 
 cat > "$STAGE/assets/BUILD-METADATA.txt" <<EOF_METADATA
-product=Chess
+product=Framilton Chess
 version=3.0.0
-package=com.cerelytic.knight
+package=com.framilton.knight
 minimum_android=29
 abi=arm64-v8a
 engine=${ENGINE_LABEL}
@@ -125,7 +125,7 @@ if [[ ! -f "$KEYSTORE" ]]; then
   keytool -genkeypair -noprompt \
     -keystore "$KEYSTORE" -storepass "$STOREPASS" -keypass "$KEYPASS" \
     -alias "$ALIAS" -keyalg RSA -keysize 2048 -validity 3650 \
-    -dname "CN=Chess Local, OU=Android, O=Local, L=Local, ST=Local, C=IN" \
+    -dname "CN=Framilton Chess Local, OU=Android, O=Framilton, L=Local, ST=Local, C=IN" \
     >/dev/null 2>&1
 fi
 
