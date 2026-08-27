@@ -23,7 +23,7 @@ static void test_pin_hash(void) {
 }
 
 static void test_save_load_and_corruption(void) {
-    const char *path = "/tmp/cerelytic-v3-model.dat";
+    const char *path = "/tmp/framilton-v3-model.dat";
     CerData a, b;
     FILE *f;
     unlink(path);
