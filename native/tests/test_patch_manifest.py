@@ -12,7 +12,7 @@ out.parent.mkdir(parents=True, exist_ok=True)
 patch_manifest(src, out)
 info = inspect_manifest(out.read_bytes())
 
-assert info["package"] == "com.framilton.chess", info
+assert info["package"] == "com.framilton.knight", info
 assert info["application_label"] == "Framilton Chess", info
 assert info["activity_label"] == "Framilton Chess", info
 assert info["lib_name"] == "sf_chess", info
