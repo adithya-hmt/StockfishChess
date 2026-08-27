@@ -13,8 +13,8 @@ patch_manifest(src, out)
 info = inspect_manifest(out.read_bytes())
 
 assert info["package"] == "com.cerelytic.knight", info
-assert info["application_label"] == "Cerelytic Chess", info
-assert info["activity_label"] == "Cerelytic Chess", info
+assert info["application_label"] == "Chess", info
+assert info["activity_label"] == "Chess", info
 assert info["lib_name"] == "sf_chess", info
 assert info["min_sdk"] == 29, info
 assert info["target_sdk"] == 29, info
